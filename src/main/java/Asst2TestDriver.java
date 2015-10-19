@@ -24,6 +24,7 @@ public class Asst2TestDriver
 	}
 
 	// --------------------------------------------------------------------
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void setObjectInspectorInfo(String ObjectInspectorName) throws Exception
 	{
 		Class objInspectClass = null;

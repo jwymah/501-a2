@@ -22,6 +22,8 @@ import java.lang.reflect.*;
 
 public class ObjectInspector
 {
+	private boolean recursive;
+	private Set<Object> inspectedSet = new HashSet<Object>();
 	public ObjectInspector()
 	{
 	}
@@ -29,6 +31,9 @@ public class ObjectInspector
 	// -----------------------------------------------------------
 	public void inspect(Object obj, boolean recursive)
 	{
+		this.recursive = recursive;
+		inspectedSet.add(obj);
+		
 		Vector<Field> objectsToInspect = new Vector<Field>();
 		Class<?> objClass = obj.getClass();
 
@@ -39,12 +44,13 @@ public class ObjectInspector
 		inspectSuperClass(objClass);
 		inspectInterfaces(objClass);
 		inspectConstructors(objClass);
+		System.out.println("Fields:");
 		inspectFields(obj, objClass, objectsToInspect);
 		inspectMethods(objClass);
 
 		if (recursive)
 		{
-			inspectFieldClasses(obj, objClass, objectsToInspect, recursive);
+			inspectFieldClasses(obj, objClass, objectsToInspect);
 		}
 	}
 
@@ -104,6 +110,11 @@ public class ObjectInspector
 			{
 			}
 		}
+
+		if ((objClass.getSuperclass() != null) && (objClass.getSuperclass().getMethods().length > 0))
+		{
+			inspectMethods(objClass.getSuperclass());
+		}
 	}
 
 	private void printModifiers(Constructor<?> constructor)
@@ -157,7 +168,7 @@ public class ObjectInspector
 	}
 
 	// -----------------------------------------------------------
-	private void inspectFieldClasses(Object obj, Class<?> ObjClass, Vector<Field> objectsToInspect, boolean recursive)
+	private void inspectFieldClasses(Object obj, Class<?> ObjClass, Vector<Field> objectsToInspect)
 	{
 		if (objectsToInspect.size() > 0)
 			System.out.println("---- Inspecting Field Classes ----");
@@ -166,12 +177,19 @@ public class ObjectInspector
 		while (e.hasMoreElements())
 		{
 			Field f = (Field) e.nextElement();
-			System.out.println("Inspecting Field: " + f.getName());
+			System.out.println("Inspecting Field: {"+ ObjClass.getName() + "." + f.getName()+":"+f.getType()+"}");
 
 			try
 			{
 				System.out.println("******************");
-				inspect(f.get(obj), recursive);
+				if (f.get(obj) != null)
+				{
+					inspect(f.get(obj), recursive);
+				}
+				else
+				{
+					System.out.println("\tField is null.");
+				}
 				System.out.println("******************");
 			}
 			catch (Exception exp)
@@ -184,7 +202,7 @@ public class ObjectInspector
 	// -----------------------------------------------------------
 	private void inspectFields(Object obj, Class<?> objClass, Vector<Field> objectsToInspect)
 	{
-		System.out.println("Fields:");
+		System.out.println();
 		for (Field f : objClass.getDeclaredFields())
 		{
 			f.setAccessible(true);
@@ -195,7 +213,7 @@ public class ObjectInspector
 			}
 			try
 			{
-				System.out.println("\tName:\t" + f.getName()
+				System.out.println("\tName:\t" + objClass.getName() + "." + f.getName()
 				  				 + "\tType:\t" + f.getType()
 								 + "\tValue:\t" + f.get(obj)
 								 + "\tModifiers:\t" + Modifier.toString(f.getModifiers()));
@@ -206,6 +224,8 @@ public class ObjectInspector
 		}
 
 		if ((objClass.getSuperclass() != null) && (objClass.getSuperclass().getDeclaredFields().length > 0))
+		{
 			inspectFields(obj, objClass.getSuperclass(), objectsToInspect);
+		}
 	}
 }
