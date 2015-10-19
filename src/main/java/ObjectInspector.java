@@ -37,6 +37,12 @@ public class ObjectInspector
 		Vector<Field> objectsToInspect = new Vector<Field>();
 		Class<?> objClass = obj.getClass();
 
+		if(objClass.isArray())
+		{
+			System.out.println(objClass.isArray());
+			inspectArray(obj,objClass);
+		}
+		
 		System.out.println("inside inspector: " + obj + " (recursive = " + recursive + ")");
 
 		// inspect the current class
@@ -51,6 +57,19 @@ public class ObjectInspector
 		if (recursive)
 		{
 			inspectFieldClasses(obj, objClass, objectsToInspect);
+		}
+	}
+
+	private void inspectArray(Object obj, Class<?> objClass)
+	{
+		System.out.println("Object is an Array: ");
+		System.out.println("\tname:\t" + objClass.getName());
+		System.out.println("\tlength:\t" + Array.getLength(obj));
+		System.out.println("\ttype:\t" + objClass.getComponentType());
+		System.out.println("\tcontents:");
+		for (int i=0; i<Array.getLength(obj); i++)
+		{
+			System.out.println("\t\t" + Array.get(obj, i));
 		}
 	}
 
@@ -168,7 +187,7 @@ public class ObjectInspector
 	}
 
 	// -----------------------------------------------------------
-	private void inspectFieldClasses(Object obj, Class<?> ObjClass, Vector<Field> objectsToInspect)
+	private void inspectFieldClasses(Object obj, Class<?> objClass, Vector<Field> objectsToInspect)
 	{
 		if (objectsToInspect.size() > 0)
 			System.out.println("---- Inspecting Field Classes ----");
@@ -177,7 +196,7 @@ public class ObjectInspector
 		while (e.hasMoreElements())
 		{
 			Field f = (Field) e.nextElement();
-			System.out.println("Inspecting Field: {"+ ObjClass.getName() + "." + f.getName()+":"+f.getType()+"}");
+			System.out.println("Inspecting Field: {"+ objClass.getName() + "." + f.getName()+":"+f.getType()+"}");
 
 			try
 			{
