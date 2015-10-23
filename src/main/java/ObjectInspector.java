@@ -24,6 +24,7 @@ public class ObjectInspector
 {
 	private boolean recursive;
 	private Map<Object,Object> inspectedSet = new IdentityHashMap<Object,Object>();
+	
 	public ObjectInspector()
 	{
 	}
@@ -31,26 +32,33 @@ public class ObjectInspector
 	// -----------------------------------------------------------
 	public void inspect(Object obj, boolean recursive)
 	{
+		System.out.println("Inspecting " + obj.getClass().getName());
 		this.recursive = recursive;
 		inspectedSet.put(obj, null);
 
+		Queue<Class<?>> interfaceQueue = new LinkedList<Class<?>>();
+		Set<Class<?>> interfaceTypes = new HashSet<Class<?>>();
 		Vector<Field> objectsToInspect = new Vector<Field>();
 		Vector<Object> arrayELementsToInspect = new Vector<Object>();
 		Class<?> objClass = obj.getClass();
-
+		
 		if(objClass.isArray())
 		{
 			System.out.println(objClass.isArray());
 			inspectArray(obj,objClass);
 		}
 
-		System.out.println("Declaring class:\t" + objClass);
+		System.out.println("Declaring class:\t" + objClass.getDeclaringClass());
 		
-		inspectSuperClass(objClass);
-		inspectInterfaces(objClass);
+		inspectSuperClass(obj, objClass, interfaceQueue, interfaceTypes, objectsToInspect, arrayELementsToInspect);
 		inspectConstructors(objClass);
+		for (Class<?> intface : objClass.getInterfaces())
+		{
+			interfaceQueue.add(intface);
+			interfaceTypes.add(intface);
+		}
+		inspectInterfaces(objClass, interfaceQueue, interfaceTypes, objectsToInspect, arrayELementsToInspect);
 		inspectMethods(objClass);
-		System.out.println("Fields:");
 		inspectFields(obj, objClass, objectsToInspect, arrayELementsToInspect);
 
 		if (recursive)
@@ -72,7 +80,7 @@ public class ObjectInspector
 		}
 	}
 
-	private void inspectInterfaces(Class<?> objClass)
+	private void inspectInterfaces(Class<?> objClass, Queue<Class<?>> interfaceQueue, Set<Class<?>> interfaceTypes, Vector<Field> objectsToInspect, Vector<Object> arrayELementsToInspect)
 	{
 		System.out.print("Implemented Interfaces:\t");
 		if (objClass.getInterfaces().length == 0)
@@ -81,14 +89,31 @@ public class ObjectInspector
 		}
 		for (Class<?> intface : objClass.getInterfaces())
 		{
-			System.out.print(intface.getName() + " ");
+			System.out.println(intface.getName() + ", ");
 		}
 		System.out.println();
+
+		for (Class<?> intface : objClass.getInterfaces())
+		{
+			if (!interfaceTypes.contains(intface))
+			{
+				interfaceQueue.add(intface);
+				interfaceTypes.add(intface);
+			}
+		}
+		
+		while (!interfaceQueue.isEmpty())
+		{
+			Class<?> curr = interfaceQueue.poll();
+			System.out.println("Inspecting interface: " + curr.getName());
+			inspectMethods(curr);
+			inspectFields(curr, curr.getClass(), objectsToInspect, arrayELementsToInspect, false); //TODO THIS CAUSESE ERROR
+		}
 	}
 
-	private void inspectSuperClass(Class<?> objClass)
-	{
-		System.out.print("Superclass:\t\t");
+	private void inspectSuperClass(Object obj, Class<?> objClass, Queue<Class<?>> interfaceQueue, Set<Class<?>> interfaceTypes, Vector<Field> objectsToInspect, Vector<Object> arrayELementsToInspect)
+	{		
+		System.out.print("\nSuperclass:\t\t");
 		if (objClass.getSuperclass() == null)
 		{
 			System.out.println("None");
@@ -96,6 +121,18 @@ public class ObjectInspector
 		else
 		{
 			System.out.println(objClass.getSuperclass().getName());
+			inspectConstructors(objClass.getSuperclass());
+			
+			inspectInterfaces(objClass.getSuperclass(), interfaceQueue, interfaceTypes, objectsToInspect, arrayELementsToInspect);
+
+			if ((objClass.getSuperclass() != null) && (objClass.getSuperclass().getDeclaredFields().length > 0))
+			{
+				inspectFields(obj, objClass.getSuperclass(), objectsToInspect, arrayELementsToInspect);
+			}
+			if (objClass.getSuperclass() != null)
+			{
+				inspectSuperClass(obj, objClass.getSuperclass(), interfaceQueue, interfaceTypes, objectsToInspect, arrayELementsToInspect);
+			}
 		}
 	}
 
@@ -127,11 +164,6 @@ public class ObjectInspector
 			catch (Exception e)
 			{
 			}
-		}
-
-		if ((objClass.getSuperclass() != null) && (objClass.getSuperclass().getMethods().length > 0))
-		{
-			inspectMethods(objClass.getSuperclass());
 		}
 	}
 
@@ -233,7 +265,11 @@ public class ObjectInspector
 	// -----------------------------------------------------------
 	private void inspectFields(Object obj, Class<?> objClass, Vector<Field> objectsToInspect, Vector<Object> arrayELementsToInspect)
 	{
-		System.out.println();
+		inspectFields(obj, objClass, objectsToInspect, arrayELementsToInspect, true);
+	}
+	private void inspectFields(Object obj, Class<?> objClass, Vector<Field> objectsToInspect, Vector<Object> arrayELementsToInspect, boolean goFurther)
+	{
+		System.out.println("Fields in class " + objClass.getName() + ":");
 		for (Field f : objClass.getDeclaredFields())
 		{
 			f.setAccessible(true);
@@ -263,7 +299,7 @@ public class ObjectInspector
 						System.out.println("\t\t\t" + f.getName()+ "[" + i + "]" + " = " + Array.get(f.get(obj), i));
 					}
 				}
-				else if (!f.getType().isPrimitive())
+				else if (goFurther && !f.getType().isPrimitive())
 				{
 					objectsToInspect.addElement(f);
 				}
@@ -271,11 +307,6 @@ public class ObjectInspector
 			catch (Exception e)
 			{
 			}
-		}
-
-		if ((objClass.getSuperclass() != null) && (objClass.getSuperclass().getDeclaredFields().length > 0))
-		{
-			inspectFields(obj, objClass.getSuperclass(), objectsToInspect, arrayELementsToInspect);
 		}
 	}
 }

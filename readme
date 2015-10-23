@@ -1,0 +1,3 @@
+known issues:
+recursion ends but goes probably too far. Certain java library classes are inspected multiple times...
+Fields of superinterfaces not parsed properly under recursion:.
