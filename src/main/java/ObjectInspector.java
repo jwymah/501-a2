@@ -23,7 +23,7 @@ import java.lang.reflect.*;
 public class ObjectInspector
 {
 	private boolean recursive;
-	private Set<Object> inspectedSet = new HashSet<Object>();
+	private Map<Object,Object> inspectedSet = new IdentityHashMap<Object,Object>();
 	public ObjectInspector()
 	{
 	}
@@ -32,9 +32,10 @@ public class ObjectInspector
 	public void inspect(Object obj, boolean recursive)
 	{
 		this.recursive = recursive;
-		inspectedSet.add(obj);
-		
+		inspectedSet.put(obj, null);
+
 		Vector<Field> objectsToInspect = new Vector<Field>();
+		Vector<Object> arrayELementsToInspect = new Vector<Object>();
 		Class<?> objClass = obj.getClass();
 
 		if(objClass.isArray())
@@ -42,21 +43,19 @@ public class ObjectInspector
 			System.out.println(objClass.isArray());
 			inspectArray(obj,objClass);
 		}
-		
-		System.out.println("inside inspector: " + obj + " (recursive = " + recursive + ")");
 
-		// inspect the current class
-		System.out.println("Declaring class:\t" + objClass.getDeclaringClass()); //TODO make this work
+		System.out.println("Declaring class:\t" + objClass);
+		
 		inspectSuperClass(objClass);
 		inspectInterfaces(objClass);
 		inspectConstructors(objClass);
-		System.out.println("Fields:");
-		inspectFields(obj, objClass, objectsToInspect);
 		inspectMethods(objClass);
+		System.out.println("Fields:");
+		inspectFields(obj, objClass, objectsToInspect, arrayELementsToInspect);
 
 		if (recursive)
 		{
-			inspectFieldClasses(obj, objClass, objectsToInspect);
+			inspectFieldClasses(obj, objClass, objectsToInspect, arrayELementsToInspect);
 		}
 	}
 
@@ -187,7 +186,7 @@ public class ObjectInspector
 	}
 
 	// -----------------------------------------------------------
-	private void inspectFieldClasses(Object obj, Class<?> objClass, Vector<Field> objectsToInspect)
+	private void inspectFieldClasses(Object obj, Class<?> objClass, Vector<Field> objectsToInspect, Vector<Object> arrayELementsToInspect)
 	{
 		if (objectsToInspect.size() > 0)
 			System.out.println("---- Inspecting Field Classes ----");
@@ -201,7 +200,7 @@ public class ObjectInspector
 			try
 			{
 				System.out.println("******************");
-				if (f.get(obj) != null)
+				if (f.get(obj) != null && !inspectedSet.containsKey(f.get(obj)))
 				{
 					inspect(f.get(obj), recursive);
 				}
@@ -216,20 +215,28 @@ public class ObjectInspector
 				exp.printStackTrace();
 			}
 		}
+		
+		Enumeration<Object> e2 = arrayELementsToInspect.elements();
+		while( e2.hasMoreElements())
+		{
+			Object o = (Object) e2.nextElement();
+			if (!inspectedSet.containsKey(o))
+			{
+				System.out.println("******************");
+				System.out.println("Inspecting Array Object {" + o.getClass().getName() + "}");
+				System.out.println("******************");
+				inspect(o.getClass(), recursive);
+			}
+		}
 	}
 
 	// -----------------------------------------------------------
-	private void inspectFields(Object obj, Class<?> objClass, Vector<Field> objectsToInspect)
+	private void inspectFields(Object obj, Class<?> objClass, Vector<Field> objectsToInspect, Vector<Object> arrayELementsToInspect)
 	{
 		System.out.println();
 		for (Field f : objClass.getDeclaredFields())
 		{
 			f.setAccessible(true);
-
-			if (!f.getType().isPrimitive())
-			{
-				objectsToInspect.addElement(f);
-			}
 			try
 			{
 				System.out.println("\tName:\t" + objClass.getName() + "." + f.getName()
@@ -240,11 +247,35 @@ public class ObjectInspector
 			catch (Exception e)
 			{
 			}
+			try
+			{
+				if (f.get(obj).getClass().isArray())
+				{
+					for (int i=0; i<Array.getLength(f.get(obj)); i++)
+					{
+						if (Array.get(f.get(obj), i) != null)
+						{
+							if (!Array.get(f.get(obj), i).getClass().isPrimitive()) //this is pointless because of primitive wrappers...
+							{
+								arrayELementsToInspect.add(Array.get(f.get(obj), i));
+							}
+						}
+						System.out.println("\t\t\t" + f.getName()+ "[" + i + "]" + " = " + Array.get(f.get(obj), i));
+					}
+				}
+				else if (!f.getType().isPrimitive())
+				{
+					objectsToInspect.addElement(f);
+				}
+			}
+			catch (Exception e)
+			{
+			}
 		}
 
 		if ((objClass.getSuperclass() != null) && (objClass.getSuperclass().getDeclaredFields().length > 0))
 		{
-			inspectFields(obj, objClass.getSuperclass(), objectsToInspect);
+			inspectFields(obj, objClass.getSuperclass(), objectsToInspect, arrayELementsToInspect);
 		}
 	}
 }
