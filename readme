@@ -1,3 +1,16 @@
+Student: Jeremy Mah
+ID 10053908
+CPSC 501
+Tut - 03 ? (M/W 10am)
+
+
+Files: Inspector.java, ObjectInspectorTest.java
+
+Choices:
+identityhashmap is used to keep track of classes visited.
+Values for fields or those in arrays are not inspected until the entire class is inspected (BFS type of way).
+hierarchy traversal is done in a DFS type way.
+
 known issues:
-recursion ends but goes probably too far. Certain java library classes are inspected multiple times...
-Fields of superinterfaces not parsed properly under recursion:.
+1. recursion ends but goes probably too far. Certain java library classes are inspected multiple times...
+2. interfaces of classes in fields are not properly found/parsed. It is an issue with field parsing.
