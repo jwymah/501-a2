@@ -1,0 +1,47 @@
+commit 69fd30252fc67e36277759ac7c98471666b95e09
+Author: jeremy mah <jeremyw.mah@gmail.com>
+Date:   Fri Oct 23 15:13:20 2015 -0600
+
+    moved file, updated readme
+
+commit 7d2b6d1d512050159c84b32f2d8848e3dce5694c
+Author: jeremy mah <jeremyw.mah@gmail.com>
+Date:   Fri Oct 23 02:11:52 2015 -0600
+
+    added tests, readme, 1 test still fails
+
+commit 8be7fa0c18865b092b5fad5dca691a79c7be266f
+Author: jeremy mah <jeremyw.mah@gmail.com>
+Date:   Thu Oct 22 18:28:21 2015 -0600
+
+    functionally complete. need tests.... and whatever refactoring?
+
+commit 3201193a92e01207f4dedeca086576724b8d2d41
+Author: jeremy mah <jeremyw.mah@gmail.com>
+Date:   Mon Oct 19 00:06:29 2015 -0600
+
+    added a top level array check but it does not recurse and only scans the first level
+
+commit b1fcdd7305e67aecf4c679b0409bde08e007d812
+Author: jeremy mah <jeremyw.mah@gmail.com>
+Date:   Sun Oct 18 22:55:58 2015 -0600
+
+    added recursive field inspection, superclass method/field checking.
+    TODO: declaring class, arrays, refactor
+
+commit ce98be8c8659b3e42d7cf60b647cf529ece507c0
+Author: jeremy mah <jeremyw.mah@gmail.com>
+Date:   Sat Oct 17 01:01:14 2015 -0600
+
+    adding surface level object inspection. TODO: recursive inspection, loop detection, unit tests??
+
+commit 9fc3ac6ccee2cd8ff4d3cc3bc178dede46e13f8d
+Author: jeremy mah <jeremyw.mah@gmail.com>
+Date:   Tue Oct 13 15:15:36 2015 -0600
+
+    initial commit with base drivers and gradle
+
+
+
+
+Refactoring were really mostly extracting methods for printing out in format....
